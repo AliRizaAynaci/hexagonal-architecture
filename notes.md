@@ -1,55 +1,60 @@
-# Hexagonal Architecture: Nedir, Neden Onemlidir, Go ile classlar olmadan nasil kurgulanir
+# Hexagonal Architecture: Nedir, Neden Önemlidir, Go ile class'lar olmadan nasıl kurgulanır?
 
-Mulakatlara hazirlanirken bir cok konuyu PoC (proof of concept) olarak uygulamaya
-calisiyorum fakat suana kadar calistigim konular icerisinde beni en cok zorlayan ve
-sifirdan tasarlayip kurmasi gercekten zor hissettiren bir konu oldugundan ileride
-tekrar okuyup hatirlamami kolaylastirmak adina aslinda bu yaziyi yaziyorum bu yuzden
-daha cok calisma notlari gibi olacaktir, umarim sizlere de faydali olur.
+Mülakatlara hazırlanırken birçok konuyu PoC (proof of concept) olarak uygulamaya çalışıyorum fakat 
+şu ana kadar çalıştığım konular içerisinde beni en çok zorlayan ve sıfırdan tasarlayıp kurması 
+gerçekten zor hissettiren bir konu olduğundan ileride tekrar okuyup hatırlamamı kolaylaştırmak 
+adına aslında bu yazıyı yazıyorum. Bu yüzden daha çok çalışma notları gibi olacaktır, 
+umarım sizlere de faydalı olur.
 
 ## Table of Contents
-- [Nedir bu Hexagonal Architecture](Nedir bu Hexagonal Architecture)
+- [Neden Hexagonal Architecture?](#neden-hexagonal-architecture)
+- [Peki Hexagonal Architecture Dediğimiz Nedir?](#peki-hexagonal-architecture-dedigimiz-nedir)
+- [Hexagonal Architecture'ı bir senaryo üzerinde sıfırdan kuralım](#hexagonal-architecturei-bir-senaryo-uzerinde-sifirdan-kuralim)
+    - [1. Adım: Domain katmanını oluşturma](#1-adim-domain-katmanini-olusturma)
+    - [2. Adım: Ports](#2-adim-ports)
+    - [3. Adım: Application - Servis Katmanı](#3-adim-application---servis-katmani)
+    - [4. Adım: Adapters (Driven - Çıkış Adaptörleri)](#4-adim-adapters-driven---cikis-adaptorleri)
+    - [5. Adım: Driving Adapters (HTTP Handler)](#5-adim-driving-adapters-http-handler)
+    - [6. Adım: Main (Composition Root & Dependency Injection)](#6-adim-main-composition-root--dependency-injection)
+- [Demo](#demo)
 
 
+## Neden Hexagonal Architecture?
 
-## Neden Hexagonal Architecture ?
-
-Klasik proje gelistirme sureclerimde aslinda cokca karsilastigim bir mimari degil.
-Fakat, production seviyesinde bir yazilim projesi gelistirirken projenin calisiyor
-olmasi ve isi yapiyor olmasi yeterli olmuyor. Proje bittikten ve teslim edilip productiona
-ciktiktan sonra maintain edilebilir olmasi gerekiyor, ki projelerin en cok maliyet
-cikartan asamasida bakim asamasidir. Bu acidan baktigimiz da bir yazilim muhendisinin
-ozellikle gunumuz AI caginda kod yazmayi degil bu kodun ileride baska muhendisler
-tarafindan kullanilacagini, ve bakim asamasinda updateler, yeni ozellikler eklenecegini
-dusunerek projeyi tasarlamalidir. Iste hexagonal architecture tam olarak bu noktada
-cok buyuk bir onem kazaniyor. 
-
-## Peki Hexagonal Architecture Dedigimiz Nedir ?
-
-Hexagonal Architecture en basit tabiriyle yüksek seviyeli sınıfların(Domain, Entities vb.),
-düşük seviyeli sınıflara (DB, LOG, External APIs vb.) bağlı olmamasıdır.
-Yani burada ki mantik SOLID (Single Responsibility, Open-Closed, 
-Liskov Substation, Interface Segregation, Dependency Inversion) prensipleriyle birebir
-uyum icerisindedir.
+Klasik proje geliştirme süreçlerimde aslında çokça karşılaştığım bir mimari değil. 
+Fakat, production seviyesinde bir yazılım projesi geliştirirken projenin çalışıyor olması ve işi yapıyor 
+olması yeterli olmuyor. Proje bittikten ve teslim edilip production'a çıktıktan sonra maintain edilebilir 
+olması gerekiyor, ki projelerin en çok maliyet çıkartan aşaması da bakım aşamasıdır. 
+Bu açıdan baktığımızda bir yazılım mühendisinin özellikle günümüz AI çağında kod yazmayı değil, 
+bu kodun ileride başka mühendisler tarafından kullanılacağını ve bakım aşamasında update'ler, 
+yeni özellikler ekleneceğini düşünerek projeyi tasarlamalıdır. 
+İşte Hexagonal Architecture tam olarak bu noktada çok büyük bir önem kazanıyor.
 
 
-Burada ki mimariyi Port-Adapter olarak dusunelim;
+## Peki Hexagonal Architecture Dediğimiz Nedir?
+
+Hexagonal Architecture en basit tabiriyle yüksek seviyeli sınıfların (Domain, Entities vb.), 
+düşük seviyeli sınıflara (DB, LOG, External APIs vb.) bağlı olmamasıdır. 
+Yani buradaki mantık SOLID (Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, 
+Dependency Inversion) prensipleriyle birebir uyum içerisindedir.
+
+Buradaki mimariyi Port-Adapter olarak düşünelim;
 Örnek verecek olursak, sistemimize gelen veriyi kaydetmek istiyoruz. 
-Hexagonal architec 'Veriyi Kaydet' diye bir kural koyarız (Port), ama bunu gerçekten
-kimin yaptığıni (Postgres mi, Mongo mu?) domain bilmez, bilmesine gerekte kalmaz. 
-Böylece bu parcalari degistirmek, yani sistemi maintain etmek cok daha basitlesir.
-Ileride sistemimizin kullandigi DB'yi degistirmek istesek oturup business
-katmanini yeniden yazmamiza gerek kalmadan, sadece onceden kurgulamis oldugumuz "Port"a
-uygun yeni bir Adapter yazmak kadar kolay olacaktir.
+Hexagonal Architecture'da 'Veriyi Kaydet' diye bir kural koyarız (Port), ama bunu gerçekten kimin yaptığını 
+(Postgres mi, Mongo mu?) domain bilmez, bilmesine gerek de kalmaz. Böylece bu parçaları değiştirmek, 
+yani sistemi maintain etmek çok daha basitleşir. İleride sistemimizin kullandığı DB'yi değiştirmek istesek 
+oturup business katmanını yeniden yazmamıza gerek kalmadan, sadece önceden kurgulamış olduğumuz 
+"Port"a uygun yeni bir Adapter yazmak kadar kolay olacaktır.
 
-## Hexagonal Architecture'i bir senaryo uzerinde sifirdan kuralim
 
-Basit bir senaryo olacak, kisaca yapmak istedigimiz senaryo
-Online Konser Bilet Satış Sistemi olsun.
+## Hexagonal Architecture'ı bir senaryo üzerinde sıfırdan kuralım
+
+Basit bir senaryo olacak, kısaca yapmak istediğimiz senaryo **Online Konser Bilet Satış Sistemi** olsun.
 
 ### 1.Adim Domain katmanini olusturma
 
-Mimariyi kurmaya en içten, yani domain katmanindan başlıyoruz. 
-Hexagonal architecture'da altın kural şudur: Bağımlılıklar her zaman içe doğru bakar.
+Mimariyi kurmaya en içten, yani domain katmanından başlıyoruz. 
+Hexagonal Architecture'da altın kural şudur: **Bağımlılıklar her zaman içe doğru bakar.** 
 Bu yüzden dış dünyayı (Database, Web Servers, Message Queues) düşünmeden önce, 
 uygulamanın ne iş yapacağını ve kurallarını tanımlamalıyız.
 
@@ -114,11 +119,11 @@ func (c *Concert) Sell(quantity int) error {
     return nil
 }
 ```
-### 2. Adım: Ports 
 
-Domain nesnemizi oluşturduk ama şu an tek başına duruyor dis dunya ile bir iletisimi
-bulunmuyor. Şimdi bu nesneye giriş ve çıkış Portlari inşa edecegiz.
-Bu portlari interface olarak tanımlıyoruz.
+### 2. Adım: Ports
+
+Domain nesnemizi oluşturduk ama şu an tek başına duruyor, dış dünya ile bir iletişimi bulunmuyor. 
+Şimdi bu nesneye giriş ve çıkış Portları inşa edeceğiz. Bu portları interface olarak tanımlıyoruz.
 
 Bizim senaryomuzda bu portlar:
 
@@ -158,18 +163,17 @@ type ConcertService interface {
 
 ### 3. Adım: Application - Servis Katmanı
 
-Entitymiz hazır, portlarimiz (Interface) hazır. 
-Şimdi bu portlari birbirine bağlayacak olan İş Akışını (Business Flow) yazalim.
+Entity'miz hazır, portlarımız (Interface) hazır.
+Şimdi bu portları birbirine bağlayacak olan İş Akışını (Business Flow) yazalım.
 
-**Servis katmaninin gorevi:**
+**Servis katmanının görevi:**
 1. Dış dünyadan gelen emri al (`ConcertService` interface'ini implemente eder).
 2. Gerekli iş kurallarını işletir (`Concert` entity'si üzerindeki metodları çağırır).
 3. Sonucu dış dünyaya kaydeder (`ConcertRepository` interface'ini kullanır).
 
-Buradaki onemli detay Dependency Injection (Bağımlılık Enjeksiyonu) 
-yapmamızdır. Servisimiz çalışmak için bir Repository'ye ihtiyaç duyar, 
-ama bu Repository'nin ne olduğunu (Postgres, MySQL, Memory) bilmez.
-Sadece interface'i bilir.
+Buradaki önemli detay **Dependency Injection** (Bağımlılık Enjeksiyonu) yapmamızdır. 
+Servisimiz çalışmak için bir Repository'ye ihtiyaç duyar, ama bu Repository'nin ne olduğunu 
+(Postgres, MySQL, Memory) bilmez. Sadece interface'i bilir.
 
 ![Başlıksız Diyagram.drawio (1).png](Ba%C5%9Fl%C4%B1ks%C4%B1z%20Diyagram.drawio%20%281%29.png)
 
@@ -238,15 +242,13 @@ func (s *service) BuyTicket(concertID string, quantity int) error {
 }
 ```
 
-### 4. Adım: Adapters (Driven - Çıkış Adaptörleri)
+### 4. Adım: Adapters
 
-Core katmanımızı tamamladık, fakat hala dis dunya ile iletisime gecmiyor uygulamamiz.
-Simdi sira soyut dünyayı dis dünyaya bağlamakta.
-Hexagonal Architecture'da, Interface'leri (Portları) implemente eden sınıflara "Adapter" diyoruz.
+Core katmanımızı tamamladık, fakat hala dış dünya ile iletişime geçmiyor uygulamamız. 
+Şimdi sıra soyut dünyayı dış dünyaya bağlamakta. Hexagonal Architecture'da, Interface'leri (Portları) 
+implemente eden sınıflara "Adapter" diyoruz.
 
-Simdi sira geldi bu kadar ugrasin sonucunda ki en faydali kismi anlamaya: 
-Core katmanımız ConcertRepository diye bir interface bekliyor. 
-Biz ona şu an basit bir **In-Memory** veritabanı vereceğiz. 
+Şimdi sıra geldi bu kadar uğraşın sonucundaki en faydalı kısmı anlamaya: Core katmanımız `ConcertRepository` diye bir interface bekliyor. Biz ona şu an basit bir **In-Memory** veritabanı vereceğiz. 
 Yarın öbür gün bunu **PostgresAdapter** ile değiştirdiğimizde Core katmanının ruhu bile duymayacak.
 
 İlk adaptörümüzü, yani veritabanı katmanını yazalım. 
@@ -306,15 +308,14 @@ Bu sayede Core katmanı, verinin bir map içinde mi yoksa
 Postgres tablosunda mı tutulduğunu asla bilmiyor.
 
 ### 5. Adım: Driving Adapters (HTTP Handler)
-Sistemimiz neredeyse hazır. Veriyi tutabiliyoruz, işleyebiliyoruz ama henüz dışarıdan 
-kimse bu sistemi tetikleyemiyor. Şimdi Fiber framework'ünü kullanarak bir 
-HTTP REST API yazacağız.
+Sistemimiz neredeyse hazır. Veriyi tutabiliyoruz, işleyebiliyoruz ama henüz dışarıdan kimse bu sistemi 
+tetikleyemiyor. Şimdi Fiber framework'ünü kullanarak bir HTTP REST API yazacağız.
 
-Bu katmanın (Adapter) tek bir görevi vardır: 
-Gelen HTTP isteğini (JSON) okumak ve Service katmanındaki ilgili fonksiyonu çağırmak. 
-İş mantığı (Business Logic) kesinlikle burada olmaz. Burası sadece bir "Tercüman" gibidir.
+Bu katmanın (Adapter) tek bir görevi vardır: Gelen HTTP isteğini (JSON) okumak ve Service katmanındaki 
+ilgili fonksiyonu çağırmak. İş mantığı (Business Logic) kesinlikle burada olmaz. 
+Burası sadece bir "Tercüman" gibidir.
 
-**Dosya:** `internal/adapters/repository/memory_repo.go`
+**Dosya:** `internal/adapters/handler/http_handler.go`
 
 ```go
 package handler
@@ -372,13 +373,13 @@ func (h *HTTPHandler) BuyTicket(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"message": "ticket bought successfully"})
 }
 ```
-Bu kodla birlikte uygulamanın Dis dunya ile etkilesimini de tamamlamış olduk.
-Artık elimizde tam teşekküllü bir Hexagonal yapı var.
-Sadece `main.go` dosyasında **Dependency Injection** islemlerini yapmak kaldı.
+Bu kodla birlikte uygulamanın Dış dünya ile etkileşimini de tamamlamış olduk. 
+Artık elimizde tam teşekküllü bir Hexagonal yapı var. Sadece `main.go` dosyasında **Dependency Injection** 
+işlemlerini yapmak kaldı.
 
-Kod tarafında Core, Ports ve Adapters  katmanlarını tamamladık. 
-Soyut kalan bu kavramların bir araya geldiğinde nasıl 
-bir veri akışı oluşturduğunu gorelim, yapıyı kafamızda oturtmak için çok önemli.
+Kod tarafında Core, Ports ve Adapters katmanlarını tamamladık. 
+Soyut kalan bu kavramların bir araya geldiğinde nasıl bir veri akışı oluşturduğunu görelim, 
+yapıyı kafamızda oturtmak için çok önemli.
 
 
 ![Başlıksız Diyagram.drawio (2).png](Ba%C5%9Fl%C4%B1ks%C4%B1z%20Diyagram.drawio%20%282%29.png)
@@ -431,11 +432,24 @@ func main() {
 ```
 
 
+### Demo
 
+Kodlarımızı yazdık, parçaları birleştirdik. 
+Şimdi terminalden uygulamamızı ayağa kaldıralım ve sonuçları gözlemleyelim.
 
+Aşağıdaki çıktılar, bu projenin temel mantığının üzerine Zap Logger ve Kafka (Event Streaming) 
+gibi yapıların eklenmiş halidir. Temel mimari (Hexagonal) birebir aynı kalmakla birlikte, 
+Adaptör katmanında yapılan geliştirmelerin Core katmanını nasıl etkilemediğini 
+veya etkilememesi gerektiğini canlı olarak görmüş oluyoruz.
 
+#### Önce bir konser oluşturalım:
 
-
+```shell
+curl -X POST http://localhost:3000/concerts \
+     -H "Content-Type: application/json" \
+     -d '{"id": "istanbul-konser", "name": "Istanbul Festival", "capacity": 50000}'
+```
+API Response:
 ```shell
 ID          : istanbul-konser
 Name        : Istanbul Festival
@@ -443,6 +457,7 @@ Capacity    : 50000
 SoldTickets : 0
 Date        : 2026-03-09T03:00:38.697811+03:00
 ```
+Uygulama Logları:
 
 ```
 
@@ -459,11 +474,21 @@ Date        : 2026-03-09T03:00:38.697811+03:00
 }
 ```
 
+#### Şimdi de bu konsere bilet satın alalım:
 ```shell
-message                   
--------                   
-ticket bought successfully
+curl -X POST http://localhost:3000/tickets \
+     -H "Content-Type: application/json" \
+     -d '{"concert_id": "istanbul-konser", "quantity": 2}'
 ```
+API Response
+```shell
+{
+    "message": "ticket bought successfully"
+}
+```
+
+Uygulama Logları:
+
 ```
 
 {
@@ -476,4 +501,11 @@ ticket bought successfully
     "concert_id":"istanbul-konser"
 }
 ```
+Gördüğümüz gibi, bir bilet satıldığında sistem sadece veritabanını güncellemekle kalmadı, 
+aynı zamanda bir domain event fırlattı. GitHub reposunu incelediğinizde göreceksiniz ki, 
+Hexagonal Architecture sayesinde bu karmaşıklığı yönetmek oldukça kolay.
 
+Bu projenin kaynak kodlarına, docker-compose dosyasına ve Kafka entegrasyonunun 
+tam haline aşağıdaki Github reposundan ulaşabilirsiniz:
+
+https://github.com/AliRizaAynaci/hexagonal-architecture
